@@ -4,7 +4,7 @@ A local Big Data sandbox environment using Docker Compose — includes MinIO AIS
 <img width="225" height="225" alt="image" src="https://github.com/user-attachments/assets/dd1f41b6-f198-4324-832d-5c8aa5b90517" />
 
 
-# Big Data Sandbox 🚀
+# Big Data Sandbox 
 
 A local Big Data sandbox environment using Docker Compose for learning and experimentation.
 
