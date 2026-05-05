@@ -1,5 +1,9 @@
 # bigdata-sandbox-minio-aistor
 A local Big Data sandbox environment using Docker Compose — includes MinIO AIStor, Trino, Dremio, Airflow, and PostgreSQL for learning and experimentation.
+
+<img width="225" height="225" alt="image" src="https://github.com/user-attachments/assets/dd1f41b6-f198-4324-832d-5c8aa5b90517" />
+
+
 # Big Data Sandbox 🚀
 
 A local Big Data sandbox environment using Docker Compose for learning and experimentation.
@@ -22,7 +26,7 @@ A local Big Data sandbox environment using Docker Compose for learning and exper
 
 ### Run
 ```bash
-git clone https://github.com/<your-username>/bigdata-sandbox
+git clone https://github.com/<Marwahamada22>/bigdata-sandbox-minio-aistor
 cd bigdata-sandbox
 cp /path/to/minio.license .
 docker compose up -d
