@@ -1,0 +1,120 @@
+services:
+  aistor:
+    image: quay.io/minio/aistor/minio:latest
+    container_name: aistor-server
+    ports:
+      - "9100:9000"
+      - "9101:9001"
+    volumes:
+      - ./data:/mnt/data
+      - ./minio.license:/minio.license
+      - ./certs:/etc/minio/certs
+    command: server /mnt/data --license /minio.license --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+
+
+
+  ## PostgreSQL
+  postgres:
+    image: postgres:14
+    container_name: sandbox-postgres
+    ports:
+      - "5537:5432"
+    volumes:
+      - ./mnt/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: "admin"
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "admin"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ## Airflow DB
+  airflow-db:
+    image: postgres:14
+    container_name: sandbox-airflow-db
+    ports:
+      - "5538:5432"
+    volumes:
+      - ./mnt/airflow/postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow_pwd
+      POSTGRES_DB: airflow_db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ## Airflow
+  airflow:
+    image: amhhaggag/airflow-2.6.3:1.0
+    container_name: sandbox-airflow
+    ports:
+      - "8190:8080"
+    volumes:
+      - ./mnt/airflow/dags:/opt/airflow/dags
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow_pwd@sandbox-airflow-db:5432/airflow_db
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ## Trino
+  trino:
+    image: amhhaggag/trino-450:1.1
+    container_name: sandbox-trino
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./mnt/trino/etc:/opt/trino/etc
+      - ./mnt/trino/sql:/sql
+      - ./trino-config:/opt/trino/etc
+    environment:
+      - TRINO_VERSION=450
+    entrypoint: ["/opt/trino/bin/entrypoint.sh"]
+    depends_on:
+      - postgres
+      - aistor
+    restart: unless-stopped
+
+  ## Dremio
+  dremio:
+    image: dremio/dremio-oss:24.3
+    container_name: sandbox-dremio
+    ports:
+      - "9147:9047"
+      - "31011:31010"
+      - "45679:45678"
+    volumes:
+      - dremio_data:/opt/dremio/data
+    environment:
+      DREMIO_MAX_HEAP: 2G
+    depends_on:
+      - aistor
+    restart: on-failure
+
+volumes:
+  dremio_data: {}
+
+networks:
+  default:
+    name: sandbox-network
